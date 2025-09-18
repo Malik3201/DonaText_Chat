@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import ChatSidebar from './ChatSidebar';
 import ChatWindow from './ChatWindow';
-import ChatProfile from './ChatProfile';
 import WelcomeScreen from './WelcomeScreen';
 import LoadingScreen from './LoadingScreen';
-import { ChatUIProps, ChatConversation, Message, User } from './types';
+import { ChatUIProps } from './types';
 
 const ChatUI: React.FC<ChatUIProps> = ({
   conversations = [],
@@ -14,14 +13,9 @@ const ChatUI: React.FC<ChatUIProps> = ({
   isLoading = false,
   onConversationSelect,
   onSendMessage,
-  onFileUpload,
-  onLoadMoreMessages,
   className = '',
-  showProfile = true,
-  showWelcomeScreen = true,
 }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   // Check if screen is mobile size
@@ -52,35 +46,17 @@ const ChatUI: React.FC<ChatUIProps> = ({
     }
   };
 
-  const handleSendMessage = (content: string, type: 'text' | 'file' = 'text', fileInfo?: any) => {
-    if (!selectedConversationId || !currentUser) return;
-
-    const newMessage: Omit<Message, 'id' | 'timestamp'> = {
-      content,
-      senderId: currentUser.id,
-      conversationId: selectedConversationId,
-      type,
-      fileInfo,
-    };
-
-    onSendMessage?.(newMessage);
-  };
-
-  const handleFileUpload = (file: File, fileInfo: any) => {
-    onFileUpload?.(file, fileInfo, selectedConversationId);
-  };
-
   // Show loading screen if specified
   if (isLoading && conversations.length === 0) {
     return <LoadingScreen />;
   }
 
   return (
-    <div className={`flex h-screen bg-gray-100 relative ${className}`}>
+    <div className={`flex h-screen bg-gradient-to-br from-gray-50 to-blue-50 relative ${className}`}>
       {/* Mobile Sidebar Overlay */}
       {isMobile && isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 backdrop-blur-sm"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
@@ -93,7 +69,7 @@ const ChatUI: React.FC<ChatUIProps> = ({
             }`
           : 'w-80'
         } 
-        border-r border-gray-200 bg-white
+        border-r border-gray-100 shadow-lg
       `}>
         <ChatSidebar
           conversations={conversations}
@@ -107,63 +83,33 @@ const ChatUI: React.FC<ChatUIProps> = ({
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {selectedConversation ? (
-          <ChatWindow
-            conversation={selectedConversation}
-            messages={conversationMessages}
-            currentUser={currentUser}
-            isMobile={isMobile}
-            onSendMessage={handleSendMessage}
-            onFileUpload={handleFileUpload}
-            onLoadMoreMessages={() => onLoadMoreMessages?.(selectedConversationId)}
-            onOpenSidebar={() => setIsSidebarOpen(true)}
-            onOpenProfile={() => setIsProfileOpen(true)}
-          />
+          <div className="h-full bg-white rounded-tl-2xl shadow-lg overflow-hidden">
+            <ChatWindow
+              conversation={selectedConversation}
+              messages={conversationMessages}
+              currentUser={currentUser}
+              isMobile={isMobile}
+              onSendMessage={onSendMessage}
+              onOpenSidebar={() => setIsSidebarOpen(true)}
+            />
+          </div>
         ) : (
           <div className="relative flex-1">
             {/* Mobile menu button when no conversation selected */}
             {isMobile && (
               <button
                 onClick={() => setIsSidebarOpen(true)}
-                className="fixed top-4 left-4 z-30 p-2 bg-white rounded-lg shadow-md"
+                className="fixed top-6 left-6 z-30 p-3 bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
             )}
-            {showWelcomeScreen && <WelcomeScreen />}
+            <WelcomeScreen />
           </div>
         )}
       </div>
-
-      {/* Profile Panel */}
-      {showProfile && selectedConversation && (
-        <>
-          {/* Mobile Profile Overlay */}
-          {isMobile && isProfileOpen && (
-            <div 
-              className="fixed inset-0 bg-black bg-opacity-50 z-40"
-              onClick={() => setIsProfileOpen(false)}
-            />
-          )}
-
-          <div className={`
-            ${isMobile 
-              ? `fixed inset-y-0 right-0 z-50 w-80 transform transition-transform duration-300 ease-in-out ${
-                  isProfileOpen ? 'translate-x-0' : 'translate-x-full'
-                }`
-              : 'w-80'
-            } 
-            border-l border-gray-200 bg-white
-          `}>
-            <ChatProfile
-              user={selectedConversation.user}
-              isMobile={isMobile}
-              onCloseProfile={() => setIsProfileOpen(false)}
-            />
-          </div>
-        </>
-      )}
     </div>
   );
 };

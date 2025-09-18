@@ -1,18 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Avatar, AvatarImage } from './ui/avatar';
 import { ChatConversation, Message, User } from './types';
-import FileIcon from './FileIcon';
 
 interface ChatWindowProps {
   conversation: ChatConversation;
   messages: Message[];
   currentUser: User | null;
   isMobile?: boolean;
-  onSendMessage?: (content: string, type?: 'text' | 'file', fileInfo?: any) => void;
-  onFileUpload?: (file: File, fileInfo: any) => void;
-  onLoadMoreMessages?: () => void;
+  onSendMessage?: (content: string, conversationId: string) => void;
   onOpenSidebar?: () => void;
-  onOpenProfile?: () => void;
 }
 
 const ChatWindow: React.FC<ChatWindowProps> = ({
@@ -21,15 +16,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   currentUser,
   isMobile = false,
   onSendMessage,
-  onFileUpload,
-  onLoadMoreMessages,
   onOpenSidebar,
-  onOpenProfile,
 }) => {
   const [newMessage, setNewMessage] = useState('');
-  const [showFileUpload, setShowFileUpload] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -39,7 +29,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   const handleSendMessage = () => {
     if (!newMessage.trim() || !onSendMessage) return;
     
-    onSendMessage(newMessage.trim());
+    onSendMessage(newMessage.trim(), conversation.id);
     setNewMessage('');
   };
 
@@ -48,20 +38,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       e.preventDefault();
       handleSendMessage();
     }
-  };
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !onFileUpload) return;
-
-    const fileInfo = {
-      name: file.name,
-      type: file.type,
-      size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
-    };
-
-    onFileUpload(file, fileInfo);
-    e.target.value = ''; // Reset input
   };
 
   const formatTimestamp = (timestamp: string) => {
@@ -77,110 +53,113 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     return (
       <div
         key={message.id}
-        className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'} mb-4`}
+        className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'} mb-6`}
       >
         {!isCurrentUser && (
-          <Avatar className="w-8 h-8 mr-2 mt-1">
-            <AvatarImage src={conversation.user.avatar} alt={conversation.user.name} />
-          </Avatar>
+          <img 
+            src={conversation.user.avatar} 
+            alt={conversation.user.name}
+            className="w-10 h-10 rounded-full object-cover mr-3 mt-1 ring-2 ring-gray-100"
+          />
         )}
         
         <div className={`max-w-xs lg:max-w-md ${isCurrentUser ? 'order-1' : 'order-2'}`}>
           <div
-            className={`px-4 py-2 rounded-lg ${
+            className={`px-4 py-3 rounded-2xl shadow-sm ${
               isCurrentUser
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 text-gray-900'
+                ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
+                : 'bg-white text-gray-900 border border-gray-100'
             }`}
           >
-            {message.type === 'file' && message.fileInfo ? (
-              <div className="flex items-center space-x-2">
-                <FileIcon className="w-5 h-5" />
-                <div>
-                  <p className="font-medium">{message.fileInfo.name}</p>
-                  <p className="text-xs opacity-75">{message.fileInfo.size}</p>
-                </div>
+            <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
+          </div>
+          <div className={`flex items-center mt-2 space-x-2 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
+            <p className="text-xs text-gray-500 font-medium">
+              {formatTimestamp(message.timestamp)}
+            </p>
+            {isCurrentUser && (
+              <div className="flex items-center space-x-1">
+                <svg className="w-3 h-3 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
               </div>
-            ) : message.type === 'calendar' && message.calendarInfo ? (
-              <div>
-                <p className="font-medium mb-2">{message.calendarInfo.title}</p>
-                <div className="space-y-1">
-                  {message.calendarInfo.timeSlots.map((slot, index) => (
-                    <div
-                      key={index}
-                      className={`text-xs px-2 py-1 rounded ${
-                        slot.available
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}
-                    >
-                      {slot.time} - {slot.available ? 'Available' : 'Unavailable'}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <p className="whitespace-pre-wrap">{message.content}</p>
             )}
           </div>
-          <p className={`text-xs mt-1 ${isCurrentUser ? 'text-right' : 'text-left'} text-gray-500`}>
-            {formatTimestamp(message.timestamp)}
-          </p>
         </div>
         
         {isCurrentUser && (
-          <Avatar className="w-8 h-8 ml-2 mt-1">
-            <AvatarImage src={currentUser?.avatar} alt={currentUser?.name} />
-          </Avatar>
+          <img 
+            src={currentUser?.avatar} 
+            alt={currentUser?.name}
+            className="w-10 h-10 rounded-full object-cover ml-3 mt-1 ring-2 ring-blue-100"
+          />
         )}
       </div>
     );
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-white">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
-        <div className="flex items-center space-x-3">
-          {isMobile && onOpenSidebar && (
-            <button
-              onClick={onOpenSidebar}
-              className="p-1 hover:bg-gray-100 rounded"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-          )}
-          
-          <div 
-            className="flex items-center space-x-3 cursor-pointer"
-            onClick={onOpenProfile}
+      <div className="flex items-center space-x-4 p-6 border-b border-gray-100 bg-white shadow-sm">
+        {isMobile && onOpenSidebar && (
+          <button
+            onClick={onOpenSidebar}
+            className="p-2 hover:bg-blue-50 rounded-lg transition-colors"
           >
-            <div className="relative">
-              <Avatar className="w-10 h-10">
-                <AvatarImage src={conversation.user.avatar} alt={conversation.user.name} />
-              </Avatar>
-              {conversation.user.status === 'online' && (
-                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
-              )}
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">{conversation.user.name}</h2>
-              <p className="text-sm text-gray-500">
-                {conversation.user.status === 'online' ? 'Online' : 'Offline'}
-                {conversation.user.title && ` • ${conversation.user.title}`}
+            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        )}
+        
+        <div className="flex items-center space-x-4">
+          <div className="relative">
+            <img 
+              src={conversation.user.avatar} 
+              alt={conversation.user.name}
+              className="w-12 h-12 rounded-full object-cover ring-2 ring-blue-100"
+            />
+            {conversation.user.status === 'online' && (
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-3 border-white rounded-full shadow-sm"></div>
+            )}
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">{conversation.user.name}</h2>
+            <div className="flex items-center space-x-2">
+              <div className={`w-2 h-2 rounded-full ${conversation.user.status === 'online' ? 'bg-green-400' : 'bg-gray-400'}`}></div>
+              <p className="text-sm text-gray-600 font-medium">
+                {conversation.user.status === 'online' ? 'Active now' : 'Offline'}
               </p>
             </div>
           </div>
         </div>
+        
+        <div className="ml-auto flex items-center space-x-2">
+          <button className="p-2 hover:bg-blue-50 rounded-lg transition-colors">
+            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+            </svg>
+          </button>
+          <button className="p-2 hover:bg-blue-50 rounded-lg transition-colors">
+            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
         {messages.length === 0 ? (
-          <div className="text-center text-gray-500 mt-8">
-            <p>No messages yet. Start the conversation!</p>
+          <div className="text-center mt-12">
+            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+            </div>
+            <p className="text-gray-600 text-lg font-medium">Start your conversation</p>
+            <p className="text-gray-500 text-sm mt-2">Send a message to begin chatting with {conversation.user.name}</p>
           </div>
         ) : (
           <>
@@ -191,50 +170,36 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       </div>
 
       {/* Message Input */}
-      <div className="p-4 border-t border-gray-200 bg-white">
-        <div className="flex items-end space-x-2">
-          <div className="flex-1">
-            <textarea
+      <div className="p-6 border-t border-gray-100 bg-white">
+        <div className="flex items-center space-x-3">
+          <div className="flex-1 relative">
+            <input
+              type="text"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Type a message..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-              rows={1}
-              style={{
-                minHeight: '40px',
-                maxHeight: '120px',
-                height: 'auto',
-              }}
+              placeholder="Type your message..."
+              className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
             />
+            <button className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors">
+              <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.01M15 10h1.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
           </div>
-          
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-            title="Attach file"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-            </svg>
-          </button>
-          
           <button
             onClick={handleSendMessage}
             disabled={!newMessage.trim()}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium shadow-sm disabled:shadow-none"
           >
-            Send
+            <div className="flex items-center space-x-2">
+              <span>Send</span>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+            </div>
           </button>
         </div>
-        
-        <input
-          ref={fileInputRef}
-          type="file"
-          onChange={handleFileSelect}
-          className="hidden"
-          accept="*/*"
-        />
       </div>
     </div>
   );
