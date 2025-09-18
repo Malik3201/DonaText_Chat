@@ -1,8 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { fileUploadService } from '../../../services/fileUploadService';
+import { fileUploadService } from '../services/fileUploadService';
 import toast from 'react-hot-toast';
-import FileIcon from '../../../assets/svgs/FileIcon';
+import FileIcon from '../assets/svgs/FileIcon';
 
 interface ChatFileUploadModalProps {
   isOpen: boolean;

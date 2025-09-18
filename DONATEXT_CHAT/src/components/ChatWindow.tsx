@@ -1,21 +1,21 @@
 ﻿import React, { useEffect, useRef, useState } from 'react';
-import FileIcon from '../../../assets/svgs/FileIcon';
-import { Avatar, AvatarImage } from '../../../components/ui/avatar';
+import FileIcon from '../assets/svgs/FileIcon';
+import { Avatar, AvatarImage } from './ui/avatar';
 import { ChatConversation, Message, User } from '../types';
 import ChatFileUploadModal from './ChatFileUploadModal';
-import { useSocket } from '../../../contexts/socketContext';
-import { useAppDispatch, useAppSelector } from '../../../hooks';
+import { useSocket } from '../contexts/socketContext';
+import { useAppDispatch, useAppSelector } from '../hooks';
 import {
   sendChatMessage,
   fetchChatMessages, // Only one thunk now
   fetchUserChats, // Add this import
-} from '../../../store/thunks/chatThunks';
+} from '../store/thunks/chatThunks';
 import {
   clearError,
   clearSuccess,
   setCurrentChatId,
   setLoadingMore,
-} from '../../../store/slices/chatSlice';
+} from '../store/slices/chatSlice';
 
 interface ChatWindowProps {
   conversation: ChatConversation;

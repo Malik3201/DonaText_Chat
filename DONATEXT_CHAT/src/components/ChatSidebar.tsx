@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Avatar, AvatarImage } from '../../../components/ui/avatar';
+import { Avatar, AvatarImage } from './ui/avatar';
 import { ChatConversation, User } from '../types';
-import { useLocalStorageUser } from '../../../utils';
+import { useLocalStorageUser } from '../utils';
 
 interface ChatSidebarProps {
   conversations: ChatConversation[];
